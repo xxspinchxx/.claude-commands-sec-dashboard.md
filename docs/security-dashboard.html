@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Repository audit of web server configuration, HTTP security headers, CORS, and public assets.">
+  <title>Web Security Audit Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #172033;
+      background: #f3f6fb;
+    }
+    body {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+    h1, h2, p { margin-top: 0; }
+    h1 { margin-bottom: .5rem; font-size: clamp(1.8rem, 4vw, 2.5rem); }
+    .intro, .muted { color: #526078; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: .8rem;
+      margin: 1.5rem 0;
+    }
+    .metric, .finding, .scope {
+      border: 1px solid #dce3ee;
+      border-radius: .75rem;
+      background: #fff;
+      padding: 1rem 1.15rem;
+    }
+    .metric strong { display: block; font-size: 1.4rem; }
+    .finding { margin: 1rem 0; border-left: 5px solid #b7791f; }
+    .finding.high { border-left-color: #b42318; }
+    .finding.medium { border-left-color: #b7791f; }
+    .finding.low { border-left-color: #526078; }
+    .priority {
+      display: inline-block;
+      margin-bottom: .5rem;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    h2 { font-size: 1.15rem; }
+    ul, ol { padding-left: 1.35rem; }
+    li + li { margin-top: .35rem; }
+    code {
+      border-radius: .2rem;
+      background: #f0f3f8;
+      padding: .1rem .3rem;
+    }
+    .scope { margin-top: 1.5rem; }
+    footer { margin-top: 1.5rem; font-size: .9rem; }
+    @media (prefers-color-scheme: dark) {
+      :root { color-scheme: dark; color: #e7edf7; background: #111827; }
+      .intro, .muted { color: #b7c3d6; }
+      .metric, .finding, .scope { border-color: #39465b; background: #1c2738; }
+      code { background: #303d51; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="muted">Repository security review · 2026-11-16</p>
+    <h1>Web Security Audit Dashboard</h1>
+    <p class="intro">Prioritized review of web server configuration, HTTP security headers, CORS, and public assets.</p>
+  </header>
+
+  <section class="summary" aria-label="Audit summary">
+    <div class="metric"><strong>3</strong>verification findings</div>
+    <div class="metric"><strong>0</strong>confirmed production misconfigurations</div>
+    <div class="metric"><strong>1</strong>repository file reviewed</div>
+  </section>
+
+  <p class="scope"><strong>Important:</strong> This repository contains only <code>README.md</code>. No server, application, deployment, or public-asset configuration was available to inspect. The findings below identify coverage gaps; they do not establish that the deployed service is misconfigured. Verify the live deployment before treating any control as absent.</p>
+
+  <main>
+    <h2>Prioritized findings</h2>
+
+    <article class="finding high">
+      <span class="priority">P1 · Verify before release</span>
+      <h2>HTTP security headers cannot be verified</h2>
+      <p><strong>Evidence:</strong> No web server or deployment configuration is present in the repository. No response-header policy can be checked.</p>
+      <p><strong>Risk:</strong> If the deployed application also omits these controls, browser protections against framing, MIME sniffing, and script injection may be weakened. This is unconfirmed until runtime responses are checked.</p>
+      <p><strong>Fix / verification:</strong></p>
+      <ol>
+        <li>Identify the production host, reverse proxy, or CDN that sets response headers, then inspect representative HTML and API responses over HTTPS.</li>
+        <li>Configure and test a restrictive Content-Security-Policy, <code>X-Content-Type-Options: nosniff</code>, an appropriate <code>Referrer-Policy</code>, and clickjacking protection using CSP <code>frame-ancestors</code> (or <code>X-Frame-Options</code> where needed).</li>
+        <li>Enable HSTS only after HTTPS is enforced for the domain and its subdomains; validate CSP against the application before enforcing it.</li>
+        <li>Keep the policy in version-controlled deployment configuration where possible, and add an automated response-header check to the release process.</li>
+      </ol>
+    </article>
+
+    <article class="finding medium">
+      <span class="priority">P2 · Verify API policy</span>
+      <h2>CORS policy is not auditable from this repository</h2>
+      <p><strong>Evidence:</strong> <code>README.md</code> contains the text <code>HTTPCORS</code>, but no API or CORS configuration is present.</p>
+      <p><strong>Risk:</strong> The allowed origins, methods, headers, and credential behavior of any deployed API are unknown.</p>
+      <p><strong>Fix / verification:</strong> Determine whether cross-origin access is needed. If it is, allow only the required trusted origins and methods, restrict request headers, and avoid combining credentialed requests with wildcard origins. If it is not needed, disable CORS. Test the deployed API with both an allowed origin and an untrusted origin.</p>
+    </article>
+
+    <article class="finding low">
+      <span class="priority">P3 · Confirm deployment scope</span>
+      <h2>Public asset exposure is outside the available audit scope</h2>
+      <p><strong>Evidence:</strong> There is no <code>public</code> or <code>static</code> directory, build output, or deployment manifest in the checkout.</p>
+      <p><strong>Risk:</strong> Files exposed by the deployed site cannot be compared with the repository or assessed for unintended disclosure.</p>
+      <p><strong>Fix / verification:</strong> Identify the actual publish directory and review its contents before deployment. Publish only intended browser assets; keep credentials, environment files, private source, and internal data out of the web root. Confirm that deployment artifacts match the reviewed source.</p>
+    </article>
+  </main>
+
+  <footer class="muted">
+    <p><strong>Scope:</strong> Repository files present at audit time; no live host or deployment target was provided. Re-run this review when server or deployment configuration becomes available.</p>
+  </footer>
+</body>
+</html>
